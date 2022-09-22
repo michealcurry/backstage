@@ -59,7 +59,7 @@ const StudentSchemaModel = new Schema({
         min:0,
         max:100
     }
-})
+},{strict:"false"})
 
 const StudentModel = mongoose.model('students',StudentSchemaModel)
 

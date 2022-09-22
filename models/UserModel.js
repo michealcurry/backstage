@@ -22,7 +22,7 @@ var UserModelSchema = new Schema({
         required:true,
         type:String,
         default:'teacher',
-        enum:['teacher','admin','superadmin']
+        enum:['student','admin','superadmin']
     }
 })
 

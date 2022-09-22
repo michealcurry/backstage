@@ -38,7 +38,7 @@ UserRouter.post('/login',expressJoi(req_login_schema),(req,res)=>{
         else if(bcrypt.compareSync(password,user.password)){
             //生成token字符串
             const tokenStr = jwt.sign({username:user.username},config.jwtSecretKey,{expiresIn:'10h'})
-            res.send({status:0,data:user,token:'Bear '+tokenStr})
+            res.send({status:0,data:{user},token:'Bear '+tokenStr})
         }
         else res.send({status:1,message:'密码错误！'})
     })

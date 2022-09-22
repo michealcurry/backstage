@@ -1,7 +1,90 @@
 const express = require('express')
+const KeyModel = require('../models/KeyModel')
+const { db } = require('../models/StudentModel')
 const StudentModel = require('../models/StudentModel')
-
+const MongoClient = require('mongodb').MongoClient
+const url = 'mongodb://hadoop100:27017/'
 const StudentRouter = express.Router()
+
+
+//添加学生的属性
+StudentRouter.post('/add_keys',(req,res)=>{
+    const {key,value,detail,modify} = req.body
+    MongoClient.connect(url).then(conn=>{
+        const students = conn.db("Amazon").collection("students")
+        students.updateMany(
+            {},
+            {$set:{[key]:value}},
+            false,
+            true
+        ).then(()=>{
+            KeyModel.findOne({keyName:key}).then((result)=>{
+                if(result) res.send({status:1,message:"属性已经存在！"})
+                else{
+                    KeyModel.insertMany({keyName:key,detail,modify})
+                    res.send({status:0,message:key+"在学生表和字段表中添加成功，且值已经修改为"+value})
+                }
+            })
+        }).catch(error=>{
+            res.send({status:1,message:error.message})
+        })
+    })
+})
+//删除学生的属性
+StudentRouter.post('/delete_keys',(req,res)=>{
+    const {key} = req.body
+    
+    KeyModel.findOne({keyName:key}).then((result)=>{
+        if (!result) res.send({ status: 1, message: "还没有创立这个属性" })
+        else {
+            MongoClient.connect(url).then(conn => {
+                const students = conn.db("Amazon").collection("students")
+                students.updateMany(
+                    {},
+                    { $unset: { [key]: '' } },
+                    false,
+                    true
+                ).then(() => {
+                    KeyModel.deleteOne({ keyName: key }).then((result) => {
+                        res.send({ status: 0, message: result })
+                    }).catch((error) => {
+                        res.send({ status: 1, message: error.message })
+                    })
+                }).catch((error) => {
+                    res.send({ status: 1, message: error.message })
+                })
+            })
+        }
+    })
+})
+//修改学生属性名
+StudentRouter.post('/update_keys',(req,res)=>{
+    const {key,newKey} = req.body
+    
+    KeyModel.findOne({keyName:key}).then((result)=>{
+        if (!result) res.send({ status: 1, message: "还没有创立这个属性" })
+        else {
+            MongoClient.connect(url).then(conn => {
+                const students = conn.db("Amazon").collection("students")
+                students.updateMany(
+                    {},
+                    { $rename: { [key]: newKey } },
+                    false,
+                    true
+                ).then(() => {
+                    KeyModel.updateOne({ keyName: key },{$set : {keyName : newKey}}).then((result) => {
+                        res.send({ status: 0, message: "修改成功！" })
+                    }).catch((error) => {
+                        res.send({ status: 1, message: error.message })
+                    })
+                }).catch((error) => {
+                    res.send({ status: 1, message: error.message })
+                })
+            })
+        }
+    })
+})
+
 
 StudentRouter.post('/add_student',(req,res)=>{
     const {id_card} = req.body
